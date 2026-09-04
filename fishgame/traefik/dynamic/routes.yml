@@ -1,0 +1,60 @@
+http:
+  routers:
+    client-http:
+      rule: "Host(`fishgame.0sake.net`) && PathPrefix(`/`)"
+      service: client
+      entrypoints:
+        - web
+      middlewares:
+        - redirect-to-https
+      priority: 10
+
+    server-http:
+      rule: "Host(`fishgame.0sake.net`) && PathPrefix(`/api`)"
+      service: server
+      entrypoints:
+        - web
+      middlewares:
+        - redirect-to-https
+      priority: 100
+
+    client-https:
+      rule: "Host(`fishgame.0sake.net`) && PathPrefix(`/`)"
+      service: client
+      entrypoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+      priority: 10
+
+    server-https:
+      rule: "Host(`fishgame.0sake.net`) && PathPrefix(`/api`)"
+      service: server
+      entrypoints:
+        - websecure
+      middlewares:
+        - server-stripprefix
+      tls:
+        certResolver: letsencrypt
+      priority: 100
+
+  middlewares:
+    redirect-to-https:
+      redirectScheme:
+        scheme: https
+        permanent: true
+
+    server-stripprefix:
+      stripPrefix:
+        prefixes:
+          - "/api"
+
+  services:
+    client:
+      loadBalancer:
+        servers:
+          - url: "http://client:80"
+    server:
+      loadBalancer:
+        servers:
+          - url: "http://server:3000"

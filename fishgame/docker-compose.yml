@@ -1,0 +1,39 @@
+services:
+  client:
+    depends_on:
+      - server
+    restart: unless-stopped
+    networks:
+      - frontnet
+
+  server:
+    depends_on:
+      - database
+    restart: unless-stopped
+    networks:
+      - backnet
+      - frontnet
+
+  database:
+    image: mongo:8.2.5
+    restart: unless-stopped
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - backnet
+
+  traefik:
+    restart: unless-stopped
+    networks:
+      - frontnet
+      - backnet
+    depends_on:
+      - client
+      - server
+
+volumes:
+  mongo-data:
+
+networks:
+  backnet:
+  frontnet:

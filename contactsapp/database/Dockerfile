@@ -1,0 +1,4 @@
+FROM mysql:9.5.0
+
+ADD ./init/01-schema.sql /docker-entrypoint-initdb.d/
+EXPOSE 3306

@@ -1,0 +1,22 @@
+info:
+  name: view
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: http://localhost:8080/api/contacts/view/?id=11
+  params:
+    - name: id
+      value: "11"
+      type: query
+  body:
+    type: json
+    data: '{"search_query":"john doe"}'
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

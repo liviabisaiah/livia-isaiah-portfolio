@@ -1,0 +1,27 @@
+services:
+  db:
+    build: ./database
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: mysqlrootpassword21
+      MYSQL_DATABASE: spdb
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+  web:
+    build: ./webserver
+    restart: always
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: spdb
+      DB_USERNAME: root
+      DB_PASSWORD: mysqlrootpassword21
+    ports:
+      - "8080:80"
+    depends_on:
+      - db
+
+volumes:
+  db_data: {}

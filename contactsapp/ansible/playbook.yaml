@@ -1,0 +1,84 @@
+---
+- name: Deploy Docker Containers with Ansible
+  hosts: all
+  become: false
+  tasks:
+    # ========================================================
+    # Install Setuptools
+    # ========================================================
+    - name: Install Python Setuptools
+      ansible.builtin.apt:
+        name: python3-setuptools
+        state: present
+
+    # ========================================================
+    # Install Docker SDK
+    # ========================================================
+    - name: Install Docker SDK
+      ansible.builtin.pip:
+        name: docker
+        state: present
+        extra_args: --break-system-packages
+
+    # ========================================================
+    # Create Network
+    # ========================================================
+    - name: Create a bridge network
+      community.docker.docker_network:
+        name: spnet
+        state: present
+
+    # ========================================================
+    # Clean Existing Database (if requested)
+    # ========================================================
+    - name: Stop db container if requested
+      community.docker.docker_container:
+        name: db
+        state: absent
+      when: reset_db | default(false) | bool
+
+    - name: Remove db volume if requested
+      community.docker.docker_volume:
+        name: db_data
+        state: absent
+      when: reset_db | default(false) | bool
+
+    # ========================================================
+    # Deploy New Containers
+    # ========================================================
+    - name: Deploy the updated db container
+      community.docker.docker_container:
+        name: db
+        image: ghcr.io/cop43312025/contactsapp-db:latest
+        env:
+          MYSQL_ROOT_PASSWORD: mysqlrootpassword21
+          MYSQL_DATABASE: spdb
+        expose:
+          - "3306"
+        volumes:
+          - db_data:/var/lib/mysql
+        networks:
+          - name: spnet
+        state: started
+        recreate: true
+        pull: true
+        restart_policy: always
+
+    - name: Deploy the updated webserver container
+      community.docker.docker_container:
+        name: web
+        image: ghcr.io/cop43312025/contactsapp-webserver:latest
+        env:
+          DB_HOST: db
+          DB_PORT: "3306"
+          DB_DATABASE: spdb
+          DB_USERNAME: root
+          DB_PASSWORD: mysqlrootpassword21
+        ports:
+          - "80:80"
+        networks:
+          - name: spnet
+        state: started
+        recreate: true
+        pull: true
+        restart_policy: always
